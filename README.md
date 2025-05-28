@@ -12,6 +12,8 @@ https://docs.docker.com/engine/install/
 ## How to build the Docker Image on your own machine
 
 ```bash
+git clone https://github.com/diamondzxd/devops-challenge
+cd app
 docker build -t simple-time-service .
 ```
 
@@ -23,7 +25,7 @@ docker run --rm -p 8080:8080 simple-time-service:latest
 
 (adding --rm flag deletes the container on exit)
 
-Head to https://localhost:8080 to test the service
+Open https://localhost:8080 to test the service
 
 ## Building and Publishing the container to Public ECR
 
@@ -32,8 +34,8 @@ Before publishing to ECR, make sure the AWS CLI v2 is installed on your machine 
 ```bash
 aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/o4r1o6a5
 docker build -t devops-challenge .
-docker tag devops-challenge:latest public.ecr.aws/o4r1o6a5/devops-challenge:latest
-docker push public.ecr.aws/o4r1o6a5/devops-challenge:latest
+docker tag devops-challenge:latest public.ecr.aws/o4r1o6a5/simple-time-service:latest
+docker push public.ecr.aws/o4r1o6a5/simple-time-service:latest
 ```
 
 The new image will be available at https://gallery.ecr.aws/o4r1o6a5/simple-time-service
