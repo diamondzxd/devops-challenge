@@ -12,13 +12,13 @@ https://docs.docker.com/engine/install/
 ## How to build the Docker Image on your own machine
 
 ```bash
-docker build -t devops-challenge .
+docker build -t simple-time-service .
 ```
 
 ## Running the container on your own machine
 
 ```bash
-docker run --rm -p 8080:8080 devops-challenge:latest
+docker run --rm -p 8080:8080 simple-time-service:latest
 ```
 
 (adding --rm flag deletes the container on exit)
@@ -36,4 +36,4 @@ docker tag devops-challenge:latest public.ecr.aws/o4r1o6a5/devops-challenge:late
 docker push public.ecr.aws/o4r1o6a5/devops-challenge:latest
 ```
 
-The new image will be available at https://gallery.ecr.aws/o4r1o6a5/devops-challenge
+The new image will be available at https://gallery.ecr.aws/o4r1o6a5/simple-time-service
