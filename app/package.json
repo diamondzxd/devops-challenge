@@ -1,7 +1,9 @@
 {
     "name": "simple-time-service",
     "version": "1.0.0",
+    "description": "A simple microservice that returns timestamp and IP address.",
     "main": "server.js",
+    "author": "Piyush Dhall",
     "scripts": {
         "start": "node server.js"
     }

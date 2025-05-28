@@ -1,0 +1,16 @@
+## Directory structure
+
+```
+.
+├── app <-- app files/directories and Dockerfile
+└── terraform <-- Terraform files/directories (i.e. we will run `terraform plan`/`terraform apply` from here)
+```
+
+### Make sure Docker is installed
+https://docs.docker.com/engine/install/
+
+## How to build the Docker Image on your own machine
+
+`docker build -t simple-time-service .`
+
+## Run the container on your own machine
