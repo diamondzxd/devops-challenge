@@ -49,3 +49,36 @@ The new image will be available at https://gallery.ecr.aws/o4r1o6a5/simple-time-
 - Terraform can be installed through the steps on their documentation https://developer.hashicorp.com/terraform/install.
 - Make sure AWS CLI is installed and authenticated through `aws configure`.
 
+### Configuring terraform and installing any packages
+
+```bash
+terraform init
+```
+
+Before deployment, override any defaults in the `terraform.tfvars` file.
+
+### Planning for deployment
+
+```bash
+terraform plan
+```
+
+### Deployment using Terraform
+
+```bash
+terraform deploy
+```
+
+You will get the outputs of the deployed artifacts as mentioned in the `outputs.tf` file.
+
+
+### Checking the deployment
+
+After running the above commands, the output will show the DNS name like this `alb_dns_name = "simpletime-alb-xxxx.elb.amazonaws.com"`. Access that URL in the browser or console.
+
+```bash
+curl http://<load_balancer_dns>/
+```
+
+### Result
+
