@@ -7,7 +7,8 @@ An HTTP API built on Docker, and deployed to AWS ECR as container.
 ```
 .
 ├── app <-- app files/directories and Dockerfile
-└── terraform <-- Terraform files/directories (i.e. we will run `terraform plan`/`terraform apply` from here)
+├── terraform <-- Terraform files/directories (i.e. we will run `terraform plan`/`terraform apply` from here)
+└── images <-- photos for examples
 ```
 
 ### Make sure Docker is installed
@@ -82,3 +83,6 @@ curl http://<load_balancer_dns>/
 
 ### Result
 
+![Terraform Apply](https://raw.githubusercontent.com/diamondzxd/devops-challenge/refs/heads/main/images/terraform_apply.png)
+
+![Browser](https://raw.githubusercontent.com/diamondzxd/devops-challenge/refs/heads/main/images/browser.png)
