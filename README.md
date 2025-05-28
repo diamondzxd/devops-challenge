@@ -1,3 +1,7 @@
+# SimpleTimeService Project
+
+An HTTP API built on Docker, and deployed to AWS ECR as container.
+
 ## Directory structure
 
 ```
@@ -39,3 +43,9 @@ docker push public.ecr.aws/o4r1o6a5/simple-time-service:latest
 ```
 
 The new image will be available at https://gallery.ecr.aws/o4r1o6a5/simple-time-service
+
+## Deploying to AWS via Terraform
+
+- Terraform can be installed through the steps on their documentation https://developer.hashicorp.com/terraform/install.
+- Make sure AWS CLI is installed and authenticated through `aws configure`.
+

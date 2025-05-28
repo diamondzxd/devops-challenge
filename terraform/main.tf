@@ -1,88 +1,75 @@
 provider "aws" {
-  region = "ap-south-1"
+  region = var.region
 }
 
+# Create a VPC using the AWS VPC module
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
   version = "5.1.0"
 
-  name = "simpletime-vpc"
-  cidr = "10.0.0.0/16"
+  name = "${var.project_name}-vpc"
+  cidr = var.vpc_cidr
 
-  azs             = ["ap-south-1a", "ap-south-1b"]
-  public_subnets  = ["10.0.1.0/24", "10.0.2.0/24"]
-  private_subnets = ["10.0.3.0/24", "10.0.4.0/24"]
+  azs             = ["${var.region}a", "${var.region}b"]
+  public_subnets  = var.public_subnets
+  private_subnets = var.private_subnets
 
   enable_nat_gateway = true
   single_nat_gateway = true
 }
 
-resource "aws_ecs_cluster" "this" {
-  name = "simpletime-cluster"
+# ECS Cluster
+resource "aws_ecs_cluster" "ecs_cluster" {
+  name = "${var.project_name}-cluster"
 }
 
-resource "aws_iam_role" "ecs_task_execution" {
-  name = "ecsTaskExecutionRole"
+# IAM Role for ECS Task Execution
+resource "aws_iam_role" "ecs_task_execution_role" {
+  name = "${var.project_name}-ecs-task-execution-role"
   assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Action = "sts:AssumeRole"
-      Effect = "Allow"
-      Principal = {
-        Service = "ecs-tasks.amazonaws.com"
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Action = "sts:AssumeRole",
+        Effect = "Allow",
+        Principal = {
+          Service = "ecs-tasks.amazonaws.com"
+        }
       }
-    }]
+    ]
   })
 }
 
-resource "aws_iam_role_policy_attachment" "ecs_task_exec_attach" {
-  role       = aws_iam_role.ecs_task_execution.name
+resource "aws_iam_role_policy_attachment" "ecs_execution_role_policy" {
+  role       = aws_iam_role.ecs_task_execution_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
-resource "aws_ecs_task_definition" "simpletime" {
-  family                   = "simpletime-task"
+# ECS Task Definition
+resource "aws_ecs_task_definition" "ecs_task" {
+  family                   = "${var.project_name}-task"
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
-  cpu                      = "256"
-  memory                   = "512"
-  execution_role_arn       = aws_iam_role.ecs_task_execution.arn
+  cpu                      = var.container_cpu
+  memory                   = var.container_memory
+  execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
 
   container_definitions = jsonencode([
     {
-      name  = "simpletime"
-      image = "public.ecr.aws/o4r1o6a5/devops-challenge:latest"
+      name  = var.project_name
+      image = var.container_image
       portMappings = [{
-        containerPort = 8080
+        containerPort = var.container_port
         protocol      = "tcp"
       }]
     }
   ])
 }
 
-resource "aws_security_group" "ecs_service" {
-  name        = "ecs_service_sg"
-  description = "Allow traffic from ALB to ECS tasks"
-  vpc_id      = module.vpc.vpc_id
-
-  ingress {
-    from_port       = 8080
-    to_port         = 8080
-    protocol        = "tcp"
-    security_groups = [aws_security_group.alb.id]
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-}
-
-resource "aws_security_group" "alb" {
-  name        = "alb_sg"
-  description = "Allow HTTP"
+# Security Group for ALB
+resource "aws_security_group" "alb_sg" {
+  name        = "${var.project_name}-alb-sg"
+  description = "Allow HTTP from the internet"
   vpc_id      = module.vpc.vpc_id
 
   ingress {
@@ -100,20 +87,44 @@ resource "aws_security_group" "alb" {
   }
 }
 
-resource "aws_lb" "this" {
-  name               = "simpletime-alb"
+# Security Group for ECS Tasks
+resource "aws_security_group" "ecs_service_sg" {
+  name        = "${var.project_name}-ecs-sg"
+  description = "Allow traffic from ALB to ECS"
+  vpc_id      = module.vpc.vpc_id
+
+  ingress {
+    from_port       = var.container_port
+    to_port         = var.container_port
+    protocol        = "tcp"
+    security_groups = [aws_security_group.alb_sg.id]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+# ALB
+resource "aws_lb" "alb" {
+  name               = "${var.project_name}-alb"
   internal           = false
   load_balancer_type = "application"
   subnets            = module.vpc.public_subnets
-  security_groups    = [aws_security_group.alb.id]
+  security_groups    = [aws_security_group.alb_sg.id]
 }
 
-resource "aws_lb_target_group" "this" {
-  name        = "simpletime-tg"
-  port        = 8080
+# Target Group
+resource "aws_lb_target_group" "target_group" {
+  name        = "${var.project_name}-tg"
+  port        = var.container_port
   protocol    = "HTTP"
   vpc_id      = module.vpc.vpc_id
   target_type = "ip"
+
   health_check {
     path                = "/"
     interval            = 30
@@ -123,35 +134,37 @@ resource "aws_lb_target_group" "this" {
   }
 }
 
-resource "aws_lb_listener" "this" {
-  load_balancer_arn = aws_lb.this.arn
+# Listener
+resource "aws_lb_listener" "listener" {
+  load_balancer_arn = aws_lb.alb.arn
   port              = 80
   protocol          = "HTTP"
 
   default_action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.this.arn
+    target_group_arn = aws_lb_target_group.target_group.arn
   }
 }
 
-resource "aws_ecs_service" "this" {
-  name            = "simpletime-service"
-  cluster         = aws_ecs_cluster.this.id
-  task_definition = aws_ecs_task_definition.simpletime.arn
+# ECS Service
+resource "aws_ecs_service" "ecs_service" {
+  name            = "${var.project_name}-service"
+  cluster         = aws_ecs_cluster.ecs_cluster.id
+  task_definition = aws_ecs_task_definition.ecs_task.arn
   desired_count   = 1
   launch_type     = "FARGATE"
 
   network_configuration {
     subnets          = module.vpc.private_subnets
-    security_groups  = [aws_security_group.ecs_service.id]
+    security_groups  = [aws_security_group.ecs_service_sg.id]
     assign_public_ip = false
   }
 
   load_balancer {
-    target_group_arn = aws_lb_target_group.this.arn
-    container_name   = "simpletime"
-    container_port   = 8080
+    target_group_arn = aws_lb_target_group.target_group.arn
+    container_name   = var.project_name
+    container_port   = var.container_port
   }
 
-  depends_on = [aws_lb_listener.this]
+  depends_on = [aws_lb_listener.listener]
 }
