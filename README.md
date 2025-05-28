@@ -38,8 +38,8 @@ Before publishing to ECR, make sure the AWS CLI v2 is installed on your machine 
 
 ```bash
 aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/o4r1o6a5
-docker build -t devops-challenge .
-docker tag devops-challenge:latest public.ecr.aws/o4r1o6a5/simple-time-service:latest
+docker build -t simple-time-service .
+docker tag simple-time-service:latest public.ecr.aws/o4r1o6a5/simple-time-service:latest
 docker push public.ecr.aws/o4r1o6a5/simple-time-service:latest
 ```
 
